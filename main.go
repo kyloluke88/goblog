@@ -1,5 +1,6 @@
 package main
 
+// 关于包中的init函数  查阅：https://learnku.com/go/t/47178 
 import (
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/gorilla/mux"
+	_ "github.com/go-sql-driver/mysql" // 匿名导入， 当导入了一个数据库驱动后，此驱动会自行初始化（利用 init() 函数）并注册自己到 Golang 的 database/sql 上下文中
 )
 
 // ArticlesFormData 创建博文表单数据
