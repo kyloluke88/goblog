@@ -36,7 +36,27 @@ func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
+
+	// 1. 直接获取指定的参数
+	// fmt.Fprintf(w, "r.Form 中 title 的值为: %v <br>", r.FormValue("title"))
+    // fmt.Fprintf(w, "r.PostForm 中 title 的值为: %v <br>", r.PostFormValue("title"))
+    // fmt.Fprintf(w, "r.Form 中 test 的值为: %v <br>", r.FormValue("test"))
+    // fmt.Fprintf(w, "r.PostForm 中 test 的值为: %v <br>", r.PostFormValue("test"))
+
+	// 2 获取所有的参数
 	fmt.Fprint(w, "创建新的文章")
+	err := r.ParseForm()
+    if err != nil {
+        // 解析错误，这里应该有错误处理
+        fmt.Fprint(w,  "请提供正确的数据！")
+        return
+    }
+
+    title := r.PostForm.Get("title")
+
+    fmt.Fprintf(w, "POST PostForm: %v <br>", r.PostForm)// PostForm：存储了 post、put 参数，在使用之前需要调用 ParseForm 方法。
+    fmt.Fprintf(w, "POST Form: %v <br>", r.Form)// Form：存储了 post、put 和 get 参数，在使用之前需要调用 ParseForm 方法。
+    fmt.Fprintf(w, "title 的值为: %v", title)
 }
 
 func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +67,7 @@ func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
     <title>创建文章 —— 我的技术博客</title>
 </head>
 <body>
-    <form action="%s" method="post">
+    <form action="%s?test=data" method="post">
         <p><input type="text" name="title"></p>
         <p><textarea name="body" cols="30" rows="10"></textarea></p>
         <p><button type="submit">提交</button></p>
@@ -108,6 +128,7 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 		}
 
 		// 2. 将请求传递下去
+		fmt.Print(r.URL.Path)
 		next.ServeHTTP(w, r)
 	})
 }
