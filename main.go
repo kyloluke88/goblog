@@ -207,10 +207,9 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		errors := validateArticleFormData(title, body)
 
 		if len(errors) == 0 {
-
 			// 4.2 表单验证通过，更新数据
 			query := "UPDATE articles SET title = ?, body = ? WHERE id = ?"
-			rs, err := db.Exec(query, title, body, id)
+			rs, err := db.Exec(query, title, body, id) // 注意本文中的stmt.Exec
 
 			if err != nil {
 				checkError(err)
@@ -226,9 +225,7 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprint(w, "您没有做任何更改！")
 			}
 		} else {
-
 			// 4.3 表单验证不通过，显示理由
-
 			updateURL, _ := router.Get("articles.update").URL("id", id)
 			data := ArticlesFormData{
 				Title:  title,
@@ -339,7 +336,7 @@ func saveArticleToDB(title string, body string) (int64, error) {
 	defer stmt.Close() // defer 延迟执行语句，Go 语言的 defer 语句会将其后面跟随的语句进行延迟处理，在 defer 归属的函数即将返回时，执行被延迟的语句。
 
 	// 3. 执行请求，传参进入绑定的内容
-	rs, err = stmt.Exec(title, body)
+	rs, err = stmt.Exec(title, body) // 注意本文中的 db.Exec()
 	if err != nil {
 		return 0, err
 	}
