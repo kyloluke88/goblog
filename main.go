@@ -25,16 +25,26 @@ type ArticlesFormData struct {
 	Errors      map[string]string
 }
 
+// router := mux.NewRouter()    包级别的变量声明时不能使用 := 语法
+var router = mux.NewRouter()
+
+var db *sql.DB
+
 // Article  对应一条文章数据
 type Article struct {
 	Title, Body string
 	ID          int64
 }
 
-// router := mux.NewRouter()    包级别的变量声明时不能使用 := 语法
-var router = mux.NewRouter()
-
-var db *sql.DB
+// Link 方法用来生成文章链接， 给Article结构体添加方法
+func (a Article) Link() string {
+    showURL, err := router.Get("articles.show").URL("id", strconv.FormatInt(a.ID, 10))
+    if err != nil {
+        checkError(err)
+        return ""
+    }
+    return showURL.String()
+}
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<h1>Hello, 欢迎来到 goblog！</h1>")
@@ -83,7 +93,35 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "访问文章列表")
+
+	// 本方法的内容解析，请参考： https://learnku.com/courses/go-basic/1.17/article-list/11512
+	// 1. 执行一个查询语句，返回一个结果集
+	rows, err := db.Query("SELECT * FROM articles")
+	checkError(err)// 要放在下一句之前执行，
+	defer rows.Close()// 1.在下方 rows.Next() 读到最后一条数据时，被执行， 2. 需在检测 err 以后调用，否则会让运行时 panic 
+	var articles []Article // map 类型，存放的是  Article 结构体
+	
+	// 2. 循环读取结果
+	for rows.Next() {
+		// 循环读取数据中，如果出错，会自动关闭数据库连接
+		var article Article
+		// 2.1 扫描每一行的结果并赋值到一个 article 对象中
+		err := rows.Scan(&article.ID, &article.Title, &article.Body)
+		checkError(err)
+		// 2.2 将article结构体追到 articles 的这个切片中
+		articles = append(articles, article)
+	}
+	// 2.3 检测遍历时是否发生错误
+	err = rows.Err()
+	checkError(err)
+	
+	// 3. 加载模板
+	tmpl, err := template.ParseFiles("resources/views/articles/index.gohtml")
+	checkError(err)
+
+	// 4. 渲染模板，将所有的文章的数据传输进去
+	err = tmpl.Execute(w, articles) // 传的是个 map 类型
+	checkError(err)
 }
 
 func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
