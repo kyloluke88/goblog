@@ -1,16 +1,20 @@
 package main
 
-// 关于包中的init函数  查阅：https://learnku.com/go/t/47178 
+// 关于包中的init函数  查阅：https://learnku.com/go/t/47178
 import (
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"text/template"
+	"time"
 	"unicode/utf8"
 
-	"github.com/gorilla/mux"
+	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql" // 匿名导入， 当导入了一个数据库驱动后，此驱动会自行初始化（利用 init() 函数）并注册自己到 Golang 的 database/sql 上下文中
+	"github.com/gorilla/mux"
 )
 
 // ArticlesFormData 创建博文表单数据
@@ -22,6 +26,8 @@ type ArticlesFormData struct {
 
 // router := mux.NewRouter()    包级别的变量声明时不能使用 := 语法
 var router = mux.NewRouter()
+
+var db *sql.DB
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<h1>Hello, 欢迎来到 goblog！</h1>")
@@ -75,9 +81,8 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "body 的值为: %v <br>", body)
 		fmt.Fprintf(w, "body 的长度为: %v <br>", len(body))
 	} else {
-		
-		storeURL, _ := router.Get("articles.store").URL()
 
+		storeURL, _ := router.Get("articles.store").URL()
 		data := ArticlesFormData{
 			Title:  title,
 			Body:   body,
@@ -116,29 +121,63 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
-	
 	storeURL, _ := router.Get("articles.store").URL()
-
 	data := ArticlesFormData{
-        Title:  "",
-        Body:   "",
-        URL:    storeURL,
-        Errors: nil,
-    }
-    tmpl, err := template.ParseFiles("resources/views/articles/create.gohtml")
-    if err != nil {
-        panic(err)
-    }
+		Title:  "",
+		Body:   "",
+		URL:    storeURL,
+		Errors: nil,
+	}
+	tmpl, err := template.ParseFiles("resources/views/articles/create.gohtml")
+	if err != nil {
+		panic(err)
+	}
 
-    err = tmpl.Execute(w, data)
-    if err != nil {
-        panic(err)
-    }
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		panic(err)
+	}
 	// fmt.Fprintf(w, html, storeURL)
 }
 
-func main() {
+func initDB() {
 
+	// 该内容，请参考  https://learnku.com/courses/go-basic/1.17/connect-to-database/11507
+	var err error
+	config := mysql.Config{
+		User:                 "root",
+		Passwd:               "root",
+		Addr:                 "127.0.0.1:3308",
+		Net:                  "tcp",
+		DBName:               "goblog",
+		AllowNativePasswords: true,
+	}
+
+	// 准备数据库连接池
+	db, err = sql.Open("mysql", config.FormatDSN())
+
+	checkError(err)
+	// 以下三个配置信息参考： https://learnku.com/courses/go-basic/1.17/connect-to-database/11507#88a495
+	// 设置最大连接数
+	db.SetMaxOpenConns(25)
+	// 设置最大空闲连接数
+	db.SetMaxIdleConns(25)
+	// 设置每个链接的过期时间
+	db.SetConnMaxLifetime(5 * time.Minute)
+
+	// 尝试连接，失败会报错
+	err = db.Ping()
+	checkError(err)
+}
+
+func checkError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func main() {
+	initDB()
 	router.HandleFunc("/", homeHandler).Methods("GET").Name("home")
 	router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
 
