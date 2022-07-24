@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -75,11 +76,14 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 检查是否有错误
 	if len(errors) == 0 {
-		fmt.Fprint(w, "验证通过!<br>")
-		fmt.Fprintf(w, "title 的值为: %v <br>", title) // %v 是专门用来打印字符串的么？？？
-		fmt.Fprintf(w, "title 的长度为: %v <br>", len(title))
-		fmt.Fprintf(w, "body 的值为: %v <br>", body)
-		fmt.Fprintf(w, "body 的长度为: %v <br>", len(body))
+		lastInsertID, err := saveArticleToDB(title, body)
+		if lastInsertID > 0 {
+			fmt.Fprint(w, "插入成功，ID 为"+strconv.FormatInt(lastInsertID, 10))
+		} else {
+			checkError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "500 服务器内部错误")
+		}
 	} else {
 
 		storeURL, _ := router.Get("articles.store").URL()
@@ -99,25 +103,6 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 	}
-	// 1. 直接获取指定的参数
-	// fmt.Fprintf(w, "r.Form 中 title 的值为: %v <br>", r.FormValue("title"))
-	// fmt.Fprintf(w, "r.PostForm 中 title 的值为: %v <br>", r.PostFormValue("title"))
-	// fmt.Fprintf(w, "r.Form 中 test 的值为: %v <br>", r.FormValue("test"))
-	// fmt.Fprintf(w, "r.PostForm 中 test 的值为: %v <br>", r.PostFormValue("test"))
-
-	// 2 获取所有的参数
-	// err := r.ParseForm()
-	// if err != nil {
-	//     // 解析错误，这里应该有错误处理
-	//     fmt.Fprint(w,  "请提供正确的数据！")
-	//     return
-	// }
-
-	// title := r.PostForm.Get("title")// 在使用之前需要调用 ParseForm 方法
-
-	// fmt.Fprintf(w, "POST PostForm: %v <br>", r.PostForm)// PostForm：存储了 post、put 参数，在使用之前需要调用 ParseForm 方法。
-	// fmt.Fprintf(w, "POST Form: %v <br>", r.Form)// Form：存储了 post、put 和 get 参数，在使用之前需要调用 ParseForm 方法。
-	// fmt.Fprintf(w, "title 的值为: %v", title)
 }
 
 func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -171,14 +156,49 @@ func initDB() {
 }
 
 func createTables() {
-    createArticlesSQL := `CREATE TABLE IF NOT EXISTS articles(
+	createArticlesSQL := `CREATE TABLE IF NOT EXISTS articles(
     id bigint(20) PRIMARY KEY AUTO_INCREMENT NOT NULL,
     title varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
     body longtext COLLATE utf8mb4_unicode_ci
 ); `
 
-    _, err := db.Exec(createArticlesSQL)
-    checkError(err)
+	_, err := db.Exec(createArticlesSQL)
+	checkError(err)
+}
+
+func saveArticleToDB(title string, body string) (int64, error) {
+
+	// 变量初始化
+	var (
+		id   int64
+		err  error
+		rs   sql.Result
+		stmt *sql.Stmt
+	)
+
+	// 1. 获取一个 prepare 声明语句
+	// Prepare 只会生产 stmt ，真正执行请求的需要调用 stmt.Exec()
+	stmt, err = db.Prepare("INSERT INTO articles (title, body) VALUES(?,?)")
+	// 例行的错误检测
+	if err != nil {
+		return 0, err
+	}
+
+	// 2. 在此函数运行结束后关闭此语句，防止占用 SQL 连接
+	defer stmt.Close() // defer 延迟执行语句，Go 语言的 defer 语句会将其后面跟随的语句进行延迟处理，在 defer 归属的函数即将返回时，执行被延迟的语句。
+
+	// 3. 执行请求，传参进入绑定的内容
+	rs, err = stmt.Exec(title, body)
+	if err != nil {
+		return 0, err
+	}
+
+	// 4. 插入成功的话，会返回自增 ID
+	if id, err = rs.LastInsertId(); id > 0 {
+		return id, nil
+	}
+
+	return 0, err
 }
 
 func checkError(err error) {
