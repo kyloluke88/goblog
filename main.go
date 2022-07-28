@@ -9,14 +9,13 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
-	"time"
 	"unicode/utf8"
 
+	"goblog/pkg/database"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
 	"goblog/pkg/types"
 
-	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql" // 匿名导入， 当导入了一个数据库驱动后，此驱动会自行初始化（利用 init() 函数）并注册自己到 Golang 的 database/sql 上下文中
 	"github.com/gorilla/mux"
 )
@@ -371,47 +370,6 @@ func validateArticleFormData(title string, body string) map[string]string {
 	return errors
 }
 
-func initDB() {
-
-	// 该内容，请参考  https://learnku.com/courses/go-basic/1.17/connect-to-database/11507
-	var err error
-	config := mysql.Config{
-		User:                 "root",
-		Passwd:               "root",
-		Addr:                 "127.0.0.1:3308",
-		Net:                  "tcp",
-		DBName:               "goblog",
-		AllowNativePasswords: true,
-	}
-
-	// 准备数据库连接池
-	db, err = sql.Open("mysql", config.FormatDSN())
-
-	logger.LogError(err)
-	// 以下三个配置信息参考： https://learnku.com/courses/go-basic/1.17/connect-to-database/11507#88a495
-	// 设置最大连接数
-	db.SetMaxOpenConns(25)
-	// 设置最大空闲连接数
-	db.SetMaxIdleConns(25)
-	// 设置每个链接的过期时间
-	db.SetConnMaxLifetime(5 * time.Minute)
-
-	// 尝试连接，失败会报错
-	err = db.Ping()
-	logger.LogError(err)
-}
-
-func createTables() {
-	createArticlesSQL := `CREATE TABLE IF NOT EXISTS articles(
-    id bigint(20) PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    title varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-    body longtext COLLATE utf8mb4_unicode_ci
-); `
-
-	_, err := db.Exec(createArticlesSQL)
-	logger.LogError(err)
-}
-
 func saveArticleToDB(title string, body string) (int64, error) {
 
 	// 变量初始化
@@ -448,10 +406,13 @@ func saveArticleToDB(title string, body string) (int64, error) {
 }
 
 func main() {
-	initDB()
-	createTables()
+
+	database.Initialize()
+	db = database.DB
+
 	route.Initialize()
 	router = route.Router
+
 	router.HandleFunc("/", homeHandler).Methods("GET").Name("home")
 	router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
 
