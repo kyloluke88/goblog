@@ -402,6 +402,7 @@ func main() {
 	db = database.DB
 
 	router = bootstrap.SetupRoute()
+	bootstrap.SetupDB()
 
 	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
