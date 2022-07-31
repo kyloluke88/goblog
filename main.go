@@ -4,6 +4,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"goblog/pkg/database"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
 	"goblog/pkg/types"
@@ -28,7 +29,6 @@ type ArticlesFormData struct {
 }
 
 var router *mux.Router
-
 var db *sql.DB
 
 // Article  对应一条文章数据
@@ -447,8 +447,9 @@ func saveArticleToDB(title string, body string) (int64, error) {
 }
 
 func main() {
-	initDB()
-	createTables()
+
+	database.Initialize()
+	db = database.DB
 
 	route.Initialize()
 	router = route.Router
