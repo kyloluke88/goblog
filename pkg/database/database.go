@@ -5,9 +5,10 @@ import (
 	"goblog/pkg/logger"
 	"time"
 
-	"gorm.io/driver/mysql"
+	"github.com/go-sql-driver/mysql"
 )
 
+// DB 数据库对象
 var DB *sql.DB
 
 // Initialize 初始化数据库
@@ -17,6 +18,7 @@ func Initialize() {
 }
 
 func initDB() {
+
 	var err error
 
 	// 设置数据库连接信息
@@ -30,18 +32,18 @@ func initDB() {
 	}
 
 	// 准备数据库连接池
-	db, err := sql.Open("mysql", config.FormatDSN())
+	DB, err = sql.Open("mysql", config.FormatDSN())
 	logger.LogError(err)
 
 	// 设置最大连接数
-	db.SetMaxOpenConns(100)
+	DB.SetMaxOpenConns(100)
 	// 设置最大空闲连接数
-	db.SetMaxIdleConns(25)
+	DB.SetMaxIdleConns(25)
 	// 设置每个链接的过期时间
-	db.SetConnMaxLifetime(5 * time.Minute)
+	DB.SetConnMaxLifetime(5 * time.Minute)
 
 	// 尝试连接，失败会报错
-	err = db.Ping()
+	err = DB.Ping()
 	logger.LogError(err)
 }
 
