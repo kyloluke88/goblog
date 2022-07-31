@@ -37,16 +37,6 @@ type Article struct {
 	ID          int64
 }
 
-// Link 方法用来生成文章链接， 给Article结构体添加方法
-func (a Article) Link() string {
-	showURL, err := router.Get("articles.show").URL("id", strconv.FormatInt(a.ID, 10))
-	if err != nil {
-		logger.LogError(err)
-		return ""
-	}
-	return showURL.String()
-}
-
 // Delete 方法用以从数据库中删除单条记录
 func (a Article) Delete() (rowsAffected int64, err error) {
 	rs, err := db.Exec("DELETE FROM articles WHERE id = " + strconv.FormatInt(a.ID, 10))
@@ -61,38 +51,6 @@ func (a Article) Delete() (rowsAffected int64, err error) {
 	}
 
 	return 0, nil
-}
-
-func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
-
-	// 本方法的内容解析，请参考： https://learnku.com/courses/go-basic/1.17/article-list/11512
-	// 1. 执行一个查询语句，返回一个结果集
-	rows, err := db.Query("SELECT * FROM articles")
-	logger.LogError(err)   // 要放在下一句之前执行，
-	defer rows.Close()     // 1.在下方 rows.Next() 读到最后一条数据时，被执行， 2. 需在检测 err 以后调用，否则会让运行时 panic
-	var articles []Article // map 类型，存放的是  Article 结构体
-
-	// 2. 循环读取结果
-	for rows.Next() {
-		// 循环读取数据中，如果出错，会自动关闭数据库连接
-		var article Article
-		// 2.1 扫描每一行的结果并赋值到一个 article 对象中
-		err := rows.Scan(&article.ID, &article.Title, &article.Body)
-		logger.LogError(err)
-		// 2.2 将article结构体追到 articles 的这个切片中
-		articles = append(articles, article)
-	}
-	// 2.3 检测遍历时是否发生错误
-	err = rows.Err()
-	logger.LogError(err)
-
-	// 3. 加载模板
-	tmpl, err := template.ParseFiles("resources/views/articles/index.gohtml")
-	logger.LogError(err)
-
-	// 4. 渲染模板，将所有的文章的数据传输进去
-	err = tmpl.Execute(w, articles) // 传的是个 map 类型
-	logger.LogError(err)
 }
 
 func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
@@ -404,7 +362,6 @@ func main() {
 	router = bootstrap.SetupRoute()
 	bootstrap.SetupDB()
 
-	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
 	router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("articles.create")
 	router.HandleFunc("/articles/{id:[0-9]+}/edit", articlesEditHandler).Methods("GET").Name("articles.edit")

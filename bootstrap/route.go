@@ -1,14 +1,17 @@
 package bootstrap
 
 import (
-    "goblog/routes"
+	"goblog/pkg/route"
+	"goblog/routes"
 
-    "github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 )
 
 // SetupRoute 路由初始化
 func SetupRoute() *mux.Router {
-    router := mux.NewRouter()
-    routes.RegisterWebRoutes(router)
-    return router
+	router := mux.NewRouter()
+	routes.RegisterWebRoutes(router)
+
+	route.SetRoute(router) // route/router.go 中 Name2URL() 方法需要这个 router
+	return router
 }

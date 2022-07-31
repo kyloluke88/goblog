@@ -17,3 +17,12 @@ func Get(idstr string) (Article, error) {
 
 	return article, nil
 }
+
+// GetAll 获取全部文章
+func GetAll() ([]Article, error) {
+	var articles []Article  // map 类型的 Article 对象?? 看这个声明感觉像是 切片？？
+	if err := model.DB.Find(&articles).Error; err != nil {
+		return articles, err
+	}
+	return articles, nil
+}
