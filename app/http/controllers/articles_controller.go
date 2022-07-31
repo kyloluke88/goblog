@@ -49,6 +49,7 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 		}).ParseFiles("resources/views/articles/show.gohtml")
 		logger.LogError(err)
 
+		// 渲染模板的调用 tmpl.Execute(w, articles)，Execute() 在执行时会设置正确的 HTML 标头。
 		err = tmpl.Execute(w, article)
 		logger.LogError(err)
 		// fmt.Fprint(w, "读取成功，文章标题 —— "+article.Title)
