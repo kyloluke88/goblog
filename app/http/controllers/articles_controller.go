@@ -3,11 +3,14 @@ package controllers
 import (
 	"database/sql"
 	"fmt"
+	"goblog/app/models/article"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
 	"goblog/pkg/types"
 	"html/template"
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
 // ArticlesController 文章相关页面
@@ -20,10 +23,10 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 	id := route.GetRouteVariable("id", r)
 
 	// 2. 读取对应的文章数据
-	article, err := getArticleByID(id)
+	article, err := article.Get(id)
 	// 3. 如果出现错误
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == gorm.ErrRecordNotFound {
 			fmt.Println(sql.ErrNoRows)
 			// 3.1 数据未找到
 			w.WriteHeader(http.StatusNotFound)
@@ -39,8 +42,8 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 		// tmpl, err := template.ParseFiles("resources/views/articles/show.gohtml")
 		// 下方代码参考 https://learnku.com/courses/go-basic/1.17/delete-article/11513#827331
 		tmpl, err := template.New("show.gohtml").Funcs(template.FuncMap{
-			"Name2URL":      route.Name2URL,
-			"Int64ToString": types.Int64ToString,
+			"Name2URL":       route.Name2URL,
+			"Uint64ToString": types.Uint64ToString,
 		}).ParseFiles("resources/views/articles/show.gohtml")
 		logger.LogError(err)
 
