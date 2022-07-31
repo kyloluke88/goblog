@@ -1,6 +1,7 @@
 package article
 
 import (
+	"goblog/pkg/logger"
 	"goblog/pkg/model"
 	"goblog/pkg/types"
 )
@@ -20,9 +21,20 @@ func Get(idstr string) (Article, error) {
 
 // GetAll 获取全部文章
 func GetAll() ([]Article, error) {
-	var articles []Article  // map 类型的 Article 对象?? 看这个声明感觉像是 切片？？
+	var articles []Article // map 类型的 Article 对象?? 看这个声明感觉像是 切片？？
 	if err := model.DB.Find(&articles).Error; err != nil {
 		return articles, err
 	}
 	return articles, nil
+}
+
+// Create 创建文章，通过 article.ID 来判断是否创建成功
+func (article *Article) Create() (err error) {
+	result := model.DB.Create(&article)
+	if err = result.Error; err != nil {
+		logger.LogError(err)
+		return err
+	}
+
+	return nil
 }
