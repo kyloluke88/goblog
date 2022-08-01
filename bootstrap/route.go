@@ -12,6 +12,6 @@ func SetupRoute() *mux.Router {
 	router := mux.NewRouter()
 	routes.RegisterWebRoutes(router)
 
-	route.SetRoute(router) // route/router.go 中 Name2URL() 方法需要这个 router
+	route.SetRoute(router) // route/router.go 中 RouteName2URL() 方法需要这个 router
 	return router
 }
