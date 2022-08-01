@@ -1,13 +1,15 @@
 package article
 
 import (
+	"goblog/app/models"
 	"goblog/pkg/route"
 	"strconv"
 )
 
 // Article 文章模型
 type Article struct {
-	ID    uint64
+	models.BaseModel
+	// ID    uint64 // 为什么这里必须要注释掉？？？
 	Title string
 	Body  string
 }
