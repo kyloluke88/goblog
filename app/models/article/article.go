@@ -10,8 +10,8 @@ import (
 type Article struct {
 	models.BaseModel
 	// ID    uint64 // 为什么这里必须要注释掉？？？因为基类中也声明了ID
-	Title string
-	Body  string
+	Title string `gorm:"type:varchar(255);not null;" valid:"title"`
+	Body  string `gorm:"type:longtext;not null;" valid:"body"`
 }
 
 // Link 方法用来生成文章链接
