@@ -1,3 +1,4 @@
+// 此包 被model包取代，没有被使用，可以删除
 package database
 
 import (
