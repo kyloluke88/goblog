@@ -3,6 +3,7 @@ package user
 import (
 	"goblog/app/models"
 	"goblog/pkg/password"
+	"goblog/pkg/route"
 )
 
 // User 用户模型，数据验证同时可以用
@@ -27,5 +28,5 @@ func (user *User) ComparePassword(_password string) bool {
 // 值接收者，就不会遇到此问题，？？？有无好的解释
 // todo
 func (user User) Link() string {
-	return ""
+	return route.RouteName2URL("users.show", "id", user.GetStringID())
 }

@@ -28,6 +28,9 @@ func RegisterWebRoutes(r *mux.Router) {
 	r.HandleFunc("/articles/{id:[0-9]+}", middlewares.Auth(ac.Update)).Methods("POST").Name("articles.update")
 	r.HandleFunc("/articles/{id:[0-9]+}/delete", middlewares.Auth(ac.Delete)).Methods("POST").Name("articles.delete")
 
+	// 用户相关
+	uc := new(controllers.UserController)
+	r.HandleFunc("/users/{id:[0-9]+}", uc.Show).Methods("GET").Name("users.show")
 	// 静态页面
 	r.PathPrefix("/css/").Handler(http.FileServer(http.Dir("./public"))) // 根据加载的文件后缀，自动设置Content-Type: text/css; charset=utf-8
 	r.PathPrefix("/js/").Handler(http.FileServer(http.Dir("./public")))
