@@ -10,7 +10,6 @@ import (
 	"goblog/pkg/view"
 	"net/http"
 	"strconv"
-	"unicode/utf8"
 
 	"gorm.io/gorm"
 )
@@ -40,7 +39,7 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "500 服务器内部错误")
 		}
 	} else {
-		view.Render(w, view.D{"Article": article}, "articles.show")
+		view.Render(w, view.D{"Article": article}, "articles.show", "articles._article-meta")
 	}
 }
 
@@ -56,7 +55,7 @@ func (*ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "500 服务器内部错误")
 	} else {
-		view.Render(w, view.D{"Articles": articles}, "articles.index")
+		view.Render(w, view.D{"Articles": articles}, "articles.index", "articles._article-meta")
 	}
 }
 
@@ -70,25 +69,6 @@ type ArticlesFormData struct {
 // Create 文章创建页面
 func (*ArticlesController) Create(w http.ResponseWriter, r *http.Request) {
 	view.Render(w, view.D{}, "articles.create", "articles._form_field")
-}
-
-func validateArticleFormData(title string, body string) map[string]string {
-	errors := make(map[string]string)
-	// 验证标题
-	if title == "" {
-		errors["title"] = "标题不能为空"
-	} else if utf8.RuneCountInString(title) < 3 || utf8.RuneCountInString(title) > 40 {
-		errors["title"] = "标题长度需介于 3-40"
-	}
-
-	// 验证内容
-	if body == "" {
-		errors["body"] = "内容不能为空"
-	} else if utf8.RuneCountInString(body) < 10 {
-		errors["body"] = "内容长度需大于或等于 10 个字节"
-	}
-
-	return errors
 }
 
 // Store 文章创建页面
@@ -242,3 +222,23 @@ func (*ArticlesController) Delete(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+// validateArticleFormData 文章表单验证
+// func validateArticleFormData(title string, body string) map[string]string {
+// 	errors := make(map[string]string)
+// 	// 验证标题
+// 	if title == "" {
+// 		errors["title"] = "标题不能为空"
+// 	} else if utf8.RuneCountInString(title) < 3 || utf8.RuneCountInString(title) > 40 {
+// 		errors["title"] = "标题长度需介于 3-40"
+// 	}
+
+// 	// 验证内容
+// 	if body == "" {
+// 		errors["body"] = "内容不能为空"
+// 	} else if utf8.RuneCountInString(body) < 10 {
+// 		errors["body"] = "内容长度需大于或等于 10 个字节"
+// 	}
+
+// 	return errors
+// }

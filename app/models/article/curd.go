@@ -13,7 +13,7 @@ func Get(idstr string) (Article, error) {
 	// First() 是 gorm.DB 提供的用以从结果集中获取第一条数据的查询方法，需要注意的是第二个参数可以传参整型或者字符串 ID，
 	// 但是传字符串会有 SQL 注入的风险，所以安全起见，我们使用 StringToUint64 做类型转换。
 	// 在 GORM 中，当 First、Last、Take 方法找不到记录时，GORM 会返回 ErrRecordNotFound 错误
-	if err := model.DB.First(&article, id).Error; err != nil {
+	if err := model.DB.Preload("User").First(&article, id).Error; err != nil {
 		return article, err
 	}
 
@@ -23,7 +23,7 @@ func Get(idstr string) (Article, error) {
 // GetAll 获取全部文章
 func GetAll() ([]Article, error) {
 	var articles []Article // map 类型的 Article 对象?? 看这个声明感觉像是 切片？？
-	if err := model.DB.Find(&articles).Error; err != nil {
+	if err := model.DB.Debug().Preload("User").Find(&articles).Error; err != nil {
 		return articles, err
 	}
 	return articles, nil

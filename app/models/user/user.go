@@ -22,3 +22,10 @@ type User struct {
 func (user *User) ComparePassword(_password string) bool {
 	return password.CheckHash(_password, user.Password)
 }
+
+// 这里如果为指针接收者的话，列表页是OK的，但详情页的 .User.Link会报错：executing "article-meta" at <.User.Link>: can't evaluate field Link in type user.User
+// 值接收者，就不会遇到此问题，？？？有无好的解释
+// todo
+func (user User) Link() string {
+	return ""
+}
