@@ -40,14 +40,18 @@ func (ac *ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 // 文章列表
 func (ac *ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 
-	// 1获取结果集
-	articles, err := article.GetAll()
+	// 1. 获取结果集
+	articles, pagerData, err := article.GetAll(r, 2)
 
 	if err != nil {
 		// 数据库错误
 		ac.ResponseForSQLError(w, err)
 	} else {
-		view.Render(w, view.D{"Articles": articles}, "articles.index", "articles._article-meta")
+		view.Render(
+			w,
+			view.D{"Articles": articles, "PagerData": pagerData},
+			"articles.index", "articles._article-meta",
+		)
 	}
 }
 
