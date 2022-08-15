@@ -11,10 +11,12 @@ import (
 type Article struct {
 	models.BaseModel
 	// ID    uint64 // 为什么这里必须要注释掉？？？因为基类中也声明了ID
-	Title  string    `gorm:"type:varchar(255);not null;" valid:"title"`
-	Body   string    `gorm:"type:longtext;not null;" valid:"body"`
-	UserID uint64    `gorm:"not null;index"`
-	User   user.User // Preload("User") 关系调用时的关键字
+	Title      string    `gorm:"type:varchar(255);not null;" valid:"title"`
+	Body       string    `gorm:"type:longtext;not null;" valid:"body"`
+	UserID     uint64    `gorm:"not null;index"`
+	User       user.User // Preload("User") 关系调用时的关键字
+	CategoryID uint64    `gorm:"not null; default:4; index"`
+	// Category   category.Category
 }
 
 // Link 方法用来生成文章链接
