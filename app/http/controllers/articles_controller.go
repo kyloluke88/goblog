@@ -6,11 +6,12 @@ import (
 	"goblog/app/policies"
 	"goblog/app/requests"
 	"goblog/pkg/auth"
+	"goblog/pkg/flash"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
+	"goblog/pkg/types"
 	"goblog/pkg/view"
 	"net/http"
-	"strconv"
 )
 
 // ArticlesController 文章相关页面
@@ -67,7 +68,7 @@ func (*ArticlesController) Create(w http.ResponseWriter, r *http.Request) {
 	view.Render(w, view.D{}, "articles.create", "articles._form_field")
 }
 
-// Store 文章创建页面
+// Store 创建文章
 func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
 
 	_article := article.Article{
@@ -82,7 +83,11 @@ func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
 	if len(errors) == 0 {
 		_article.Create()
 		if _article.ID > 0 {
-			fmt.Fprint(w, "插入成功，ID 为"+strconv.FormatUint(_article.ID, 10))
+			// fmt.Fprint(w, "插入成功，ID 为"+strconv.FormatUint(_article.ID, 10))
+			// 创建成功直接去文章详情页
+			flash.Success("文章创建成功")
+			showURL := route.RouteName2URL("article.show", types.Uint64ToString(_article.ID))
+			http.Redirect(w, r, showURL, http.StatusFound)
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "创建文章失败，请联系管理员")
